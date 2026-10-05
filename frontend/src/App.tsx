@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { Layout } from './components/layout/Layout';
 import { LoginPage } from './pages/LoginPage';
 import { BooksPage } from './pages/BooksPage';
+import { IssueBookPage } from './pages/IssueBookPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 export function App() {
@@ -17,7 +18,7 @@ export function App() {
 
             {/* Authenticated Librarian Routes */}
             <Route element={<ProtectedRoute />}>
-              <Route path="borrow" element={<div className="card"><h2>Issue Book</h2></div>} />
+              <Route path="borrow" element={<IssueBookPage />} />
               <Route path="members" element={<div className="card"><h2>Members Directory</h2></div>} />
               <Route path="members/:id/history" element={<div className="card"><h2>Member History</h2></div>} />
             </Route>
