@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import { Layout } from './components/layout/Layout';
 import { LoginPage } from './pages/LoginPage';
+import { BooksPage } from './pages/BooksPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 export function App() {
@@ -12,7 +13,7 @@ export function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Navigate to="/books" replace />} />
             <Route path="login" element={<LoginPage />} />
-            <Route path="books" element={<div className="card"><h2>Book Catalogue</h2></div>} />
+            <Route path="books" element={<BooksPage />} />
 
             {/* Authenticated Librarian Routes */}
             <Route element={<ProtectedRoute />}>
