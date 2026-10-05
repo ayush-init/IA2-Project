@@ -33,6 +33,10 @@ app.get('/api/health', (_req: Request, res: Response) => {
 import authRoutes from './routes/auth.routes';
 app.use('/api/auth', authRoutes);
 
+// Book routes
+import bookRoutes from './routes/book.routes';
+app.use('/api/books', bookRoutes);
+
 // 404 Fallback for unmatched routes
 app.use(notFoundHandler);
 
