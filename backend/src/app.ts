@@ -45,6 +45,10 @@ app.use('/api/members', memberRoutes);
 import borrowRoutes from './routes/borrow.routes';
 app.use('/api/borrow', borrowRoutes);
 
+// Return routes
+import returnRoutes from './routes/return.routes';
+app.use('/api/return', returnRoutes);
+
 // 404 Fallback for unmatched routes
 app.use(notFoundHandler);
 
