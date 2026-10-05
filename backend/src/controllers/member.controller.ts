@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Member } from '../models/Member';
+import { BorrowRecord } from '../models/BorrowRecord';
 import { createMemberSchema, memberQuerySchema } from '../validators/member.validator';
 import { AppError } from '../middleware/errorHandler';
 
@@ -93,6 +94,66 @@ export async function getMemberById(
     res.status(200).json({
       success: true,
       data: member,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getMemberHistory(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { id } = req.params;
+
+    const member = await Member.findById(id);
+    if (!member) {
+      throw new AppError('Member not found', 404);
+    }
+
+    const records = await BorrowRecord.find({ member: id })
+      .sort({ issueDate: -1, createdAt: -1 })
+      .populate('book', 'title author ISBN genre totalCopies availableCopies')
+      .lean();
+
+    const now = new Date();
+
+    // Map records and dynamically derive overdue status if dueDate < now and not returned
+    const processedRecords = records.map((record: any) => {
+      const isPastDue = new Date(record.dueDate) < now;
+      let effectiveStatus = record.status;
+
+      if (record.status === 'issued' && isPastDue) {
+        effectiveStatus = 'overdue';
+      }
+
+      return {
+        ...record,
+        status: effectiveStatus,
+        isOverdue: effectiveStatus === 'overdue',
+      };
+    });
+
+    const summary = {
+      total: processedRecords.length,
+      active: processedRecords.filter((r) => r.status === 'issued').length,
+      returned: processedRecords.filter((r) => r.status === 'returned').length,
+      overdue: processedRecords.filter((r) => r.status === 'overdue').length,
+    };
+
+    res.status(200).json({
+      success: true,
+      member: {
+        id: member._id,
+        name: member.name,
+        email: member.email,
+        membershipId: member.membershipId,
+        joinedDate: member.joinedDate,
+      },
+      data: processedRecords,
+      summary,
     });
   } catch (error) {
     next(error);
