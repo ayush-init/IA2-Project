@@ -29,6 +29,10 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
+// Authentication routes
+import authRoutes from './routes/auth.routes';
+app.use('/api/auth', authRoutes);
+
 // 404 Fallback for unmatched routes
 app.use(notFoundHandler);
 

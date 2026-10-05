@@ -1,10 +1,12 @@
 import app from './app';
 import { config } from './config/env';
 import { connectDatabase } from './config/db';
+import { seedDefaultLibrarian } from './utils/seed';
 
 async function bootstrap() {
   try {
     await connectDatabase(config.mongoUri);
+    await seedDefaultLibrarian();
 
     const server = app.listen(config.port, () => {
       console.log(`===============================================`);
