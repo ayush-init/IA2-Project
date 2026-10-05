@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { MemberHistoryResponse, BorrowRecord, Book } from '../types';
 import { api } from '../services/api';
+import { DataTable } from '../components/common/DataTable';
 
 export const MemberHistoryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -246,113 +247,128 @@ export const MemberHistoryPage: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="table-responsive" style={{ border: 'none', borderRadius: 0 }}>
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>Book Information</th>
-                  <th>Issue Date</th>
-                  <th>Due Date</th>
-                  <th>Return Date</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'center' }}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.map((r) => {
+          <DataTable<BorrowRecord>
+            data={records}
+            keyExtractor={(r) => r._id}
+            rowStyle={(r) => ({
+              backgroundColor: isRecordOverdue(r) ? 'rgba(254, 242, 242, 0.45)' : undefined,
+            })}
+            columns={[
+              {
+                header: 'Book Information',
+                cell: (r) => {
                   const book = typeof r.book === 'object' ? (r.book as Book) : null;
-                  const overdue = isRecordOverdue(r);
-
                   return (
-                    <tr
-                      key={r._id}
-                      style={{
-                        backgroundColor: overdue ? 'rgba(254, 242, 242, 0.45)' : undefined,
-                      }}
-                    >
-                      <td>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                          {book ? book.title : 'Book Title Unavailable'}
-                        </div>
-                        <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                          by {book ? book.author : 'Unknown'} • ISBN: {book ? book.ISBN : 'N/A'}
-                        </div>
-                      </td>
-
-                      <td style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-                        {new Date(r.issueDate).toLocaleDateString()}
-                      </td>
-
-                      <td style={{
-                        fontSize: '0.88rem',
-                        fontWeight: overdue ? 700 : 500,
-                        color: overdue ? 'var(--danger-text)' : 'var(--text-secondary)',
-                      }}>
-                        {new Date(r.dueDate).toLocaleDateString()}
-                      </td>
-
-                      <td style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
-                        {r.returnDate ? new Date(r.returnDate).toLocaleDateString() : '—'}
-                      </td>
-
-                      <td>
-                        {overdue ? (
-                          <span
-                            className="badge badge-overdue"
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.3rem',
-                              padding: '0.3rem 0.65rem',
-                              fontSize: '0.78rem',
-                              fontWeight: 800,
-                              letterSpacing: '0.04em',
-                            }}
-                          >
-                            <AlertTriangle size={13} />
-                            <span>OVERDUE</span>
-                          </span>
-                        ) : r.status === 'returned' ? (
-                          <span className="badge badge-returned">
-                            <CheckCircle2 size={13} />
-                            <span>RETURNED</span>
-                          </span>
-                        ) : (
-                          <span className="badge badge-issued">
-                            <Clock size={13} />
-                            <span>ACTIVE</span>
-                          </span>
-                        )}
-                      </td>
-
-                      <td style={{ textAlign: 'center' }}>
-                        {r.status !== 'returned' ? (
-                          <button
-                            onClick={() => handleReturnBook(r._id)}
-                            disabled={returningId === r._id}
-                            className="btn btn-secondary"
-                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
-                            title="Return this book"
-                          >
-                            {returningId === r._id ? (
-                              <div className="spinner" style={{ width: '12px', height: '12px', borderWidth: '2px' }} />
-                            ) : (
-                              <>
-                                <RotateCcw size={13} />
-                                <span>Return</span>
-                              </>
-                            )}
-                          </button>
-                        ) : (
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Completed</span>
-                        )}
-                      </td>
-                    </tr>
+                    <div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {book ? book.title : 'Book Title Unavailable'}
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                        by {book ? book.author : 'Unknown'} • ISBN: {book ? book.ISBN : 'N/A'}
+                      </div>
+                    </div>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
+                },
+              },
+              {
+                header: 'Issue Date',
+                cell: (r) => (
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                    {new Date(r.issueDate).toLocaleDateString()}
+                  </span>
+                ),
+              },
+              {
+                header: 'Due Date',
+                cell: (r) => {
+                  const overdue = isRecordOverdue(r);
+                  return (
+                    <span style={{
+                      fontSize: '0.88rem',
+                      fontWeight: overdue ? 700 : 500,
+                      color: overdue ? 'var(--danger-text)' : 'var(--text-secondary)',
+                    }}>
+                      {new Date(r.dueDate).toLocaleDateString()}
+                    </span>
+                  );
+                },
+              },
+              {
+                header: 'Return Date',
+                cell: (r) => (
+                  <span style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>
+                    {r.returnDate ? new Date(r.returnDate).toLocaleDateString() : '—'}
+                  </span>
+                ),
+              },
+              {
+                header: 'Status',
+                cell: (r) => {
+                  const overdue = isRecordOverdue(r);
+                  if (overdue) {
+                    return (
+                      <span
+                        className="badge badge-overdue"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          padding: '0.3rem 0.65rem',
+                          fontSize: '0.78rem',
+                          fontWeight: 800,
+                          letterSpacing: '0.04em',
+                        }}
+                      >
+                        <AlertTriangle size={13} />
+                        <span>OVERDUE</span>
+                      </span>
+                    );
+                  }
+                  if (r.status === 'returned') {
+                    return (
+                      <span className="badge badge-returned">
+                        <CheckCircle2 size={13} />
+                        <span>RETURNED</span>
+                      </span>
+                    );
+                  }
+                  return (
+                    <span className="badge badge-issued">
+                      <Clock size={13} />
+                      <span>ACTIVE</span>
+                    </span>
+                  );
+                },
+              },
+              {
+                header: 'Action',
+                align: 'center',
+                cell: (r) => {
+                  if (r.status === 'returned') {
+                    return <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Completed</span>;
+                  }
+                  return (
+                    <button
+                      onClick={() => handleReturnBook(r._id)}
+                      disabled={returningId === r._id}
+                      className="btn btn-secondary"
+                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                      title="Return this book"
+                    >
+                      {returningId === r._id ? (
+                        <div className="spinner" style={{ width: '12px', height: '12px', borderWidth: '2px' }} />
+                      ) : (
+                        <>
+                          <RotateCcw size={13} />
+                          <span>Return</span>
+                        </>
+                      )}
+                    </button>
+                  );
+                },
+              },
+            ]}
+          />
         )}
       </div>
     </div>

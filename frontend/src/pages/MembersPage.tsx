@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Member, PaginationMetadata } from '../types';
 import { api } from '../services/api';
+import { DataTable } from '../components/common/DataTable';
 
 export const MembersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -204,59 +205,66 @@ export const MembersPage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="table-responsive">
-          <table className="custom-table">
-            <thead>
-              <tr>
-                <th>Member Name</th>
-                <th>Membership ID</th>
-                <th>Email Address</th>
-                <th>Joined Date</th>
-                <th style={{ textAlign: 'center' }}>Borrow History</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((m) => (
-                <tr key={m._id}>
-                  <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {m.name}
-                  </td>
-                  <td>
-                    <code style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: '0.85rem',
-                      backgroundColor: 'var(--bg-muted)',
-                      padding: '0.2rem 0.5rem',
-                      borderRadius: 'var(--radius-sm)',
-                      fontWeight: 600,
-                    }}>
-                      {m.membershipId}
-                    </code>
-                  </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Mail size={14} color="var(--text-muted)" />
-                      <span>{m.email}</span>
-                    </div>
-                  </td>
-                  <td style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
-                    {new Date(m.joinedDate).toLocaleDateString()}
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <button
-                      onClick={() => navigate(`/members/${m._id}/history`)}
-                      className="btn btn-secondary"
-                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.82rem' }}
-                    >
-                      <History size={15} color="var(--primary)" />
-                      <span>View History</span>
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable<Member>
+          data={members}
+          keyExtractor={(m) => m._id}
+          columns={[
+            {
+              header: 'Member Name',
+              cell: (m) => (
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {m.name}
+                </span>
+              ),
+            },
+            {
+              header: 'Membership ID',
+              cell: (m) => (
+                <code style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.85rem',
+                  backgroundColor: 'var(--bg-muted)',
+                  padding: '0.2rem 0.5rem',
+                  borderRadius: 'var(--radius-sm)',
+                  fontWeight: 600,
+                }}>
+                  {m.membershipId}
+                </code>
+              ),
+            },
+            {
+              header: 'Email Address',
+              cell: (m) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary)' }}>
+                  <Mail size={14} color="var(--text-muted)" />
+                  <span>{m.email}</span>
+                </div>
+              ),
+            },
+            {
+              header: 'Joined Date',
+              cell: (m) => (
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+                  {new Date(m.joinedDate).toLocaleDateString()}
+                </span>
+              ),
+            },
+            {
+              header: 'Borrow History',
+              align: 'center',
+              cell: (m) => (
+                <button
+                  onClick={() => navigate(`/members/${m._id}/history`)}
+                  className="btn btn-secondary"
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.82rem' }}
+                >
+                  <History size={15} color="var(--primary)" />
+                  <span>View History</span>
+                </button>
+              ),
+            },
+          ]}
+        />
       )}
 
       {/* Member Registration Modal */}

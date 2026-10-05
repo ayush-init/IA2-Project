@@ -14,6 +14,7 @@ import {
 import { Book, PaginationMetadata } from '../types';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { DataTable } from '../components/common/DataTable';
 
 export const BooksPage: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -315,76 +316,89 @@ export const BooksPage: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="table-responsive">
-            <table className="custom-table">
-              <thead>
-                <tr>
-                  <th>Title</th>
-                  <th>Author</th>
-                  <th>ISBN</th>
-                  <th>Genre</th>
-                  <th>Total Copies</th>
-                  <th>Available Copies</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {books.map((book) => {
+          <DataTable<Book>
+            data={books}
+            keyExtractor={(b) => b._id}
+            columns={[
+              {
+                header: 'Title',
+                cell: (book) => (
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {book.title}
+                  </span>
+                ),
+              },
+              {
+                header: 'Author',
+                accessorKey: 'author',
+                cell: (book) => <span style={{ color: 'var(--text-secondary)' }}>{book.author}</span>,
+              },
+              {
+                header: 'ISBN',
+                cell: (book) => (
+                  <code style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.82rem',
+                    backgroundColor: 'var(--bg-muted)',
+                    padding: '0.15rem 0.45rem',
+                    borderRadius: 'var(--radius-sm)',
+                  }}>
+                    {book.ISBN}
+                  </code>
+                ),
+              },
+              {
+                header: 'Genre',
+                cell: (book) => (
+                  <span style={{
+                    backgroundColor: 'var(--bg-muted)',
+                    padding: '0.2rem 0.55rem',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.82rem',
+                    fontWeight: 500,
+                    color: 'var(--text-secondary)',
+                  }}>
+                    {book.genre}
+                  </span>
+                ),
+              },
+              {
+                header: 'Total Copies',
+                align: 'center',
+                cell: (book) => <span style={{ fontWeight: 600 }}>{book.totalCopies}</span>,
+              },
+              {
+                header: 'Available Copies',
+                align: 'center',
+                cell: (book) => {
                   const isAvailable = book.availableCopies > 0;
                   return (
-                    <tr key={book._id}>
-                      <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                        {book.title}
-                      </td>
-                      <td style={{ color: 'var(--text-secondary)' }}>
-                        {book.author}
-                      </td>
-                      <td>
-                        <code style={{
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '0.82rem',
-                          backgroundColor: 'var(--bg-muted)',
-                          padding: '0.15rem 0.45rem',
-                          borderRadius: 'var(--radius-sm)',
-                        }}>
-                          {book.ISBN}
-                        </code>
-                      </td>
-                      <td>
-                        <span style={{
-                          backgroundColor: 'var(--bg-muted)',
-                          padding: '0.2rem 0.55rem',
-                          borderRadius: 'var(--radius-sm)',
-                          fontSize: '0.82rem',
-                          fontWeight: 500,
-                          color: 'var(--text-secondary)',
-                        }}>
-                          {book.genre}
-                        </span>
-                      </td>
-                      <td style={{ textAlign: 'center', fontWeight: 600 }}>
-                        {book.totalCopies}
-                      </td>
-                      <td style={{ textAlign: 'center', fontWeight: 700, color: isAvailable ? 'var(--success-text)' : 'var(--danger-text)' }}>
-                        {book.availableCopies}
-                      </td>
-                      <td>
-                        {isAvailable ? (
-                          <span className="badge badge-returned" style={{ fontSize: '0.72rem' }}>
-                            Available ({book.availableCopies})
-                          </span>
-                        ) : (
-                          <span className="badge badge-overdue" style={{ fontSize: '0.72rem' }}>
-                            Out of Stock
-                          </span>
-                        )}
-                      </td>
-                    </tr>
+                    <span style={{
+                      fontWeight: 700,
+                      color: isAvailable ? 'var(--success-text)' : 'var(--danger-text)',
+                    }}>
+                      {book.availableCopies}
+                    </span>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
+                },
+              },
+              {
+                header: 'Status',
+                cell: (book) => {
+                  const isAvailable = book.availableCopies > 0;
+                  return isAvailable ? (
+                    <span className="badge badge-returned" style={{ fontSize: '0.72rem' }}>
+                      Available ({book.availableCopies})
+                    </span>
+                  ) : (
+                    <span className="badge badge-overdue" style={{ fontSize: '0.72rem' }}>
+                      Out of Stock
+                    </span>
+                  );
+                },
+              },
+            ]}
+          />
 
           {/* Pagination Footer */}
           <div style={{
