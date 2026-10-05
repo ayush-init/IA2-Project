@@ -37,6 +37,10 @@ app.use('/api/auth', authRoutes);
 import bookRoutes from './routes/book.routes';
 app.use('/api/books', bookRoutes);
 
+// Member routes
+import memberRoutes from './routes/member.routes';
+app.use('/api/members', memberRoutes);
+
 // 404 Fallback for unmatched routes
 app.use(notFoundHandler);
 
