@@ -4,6 +4,8 @@ import { Layout } from './components/layout/Layout';
 import { LoginPage } from './pages/LoginPage';
 import { BooksPage } from './pages/BooksPage';
 import { IssueBookPage } from './pages/IssueBookPage';
+import { MembersPage } from './pages/MembersPage';
+import { MemberHistoryPage } from './pages/MemberHistoryPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 export function App() {
@@ -19,8 +21,8 @@ export function App() {
             {/* Authenticated Librarian Routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="borrow" element={<IssueBookPage />} />
-              <Route path="members" element={<div className="card"><h2>Members Directory</h2></div>} />
-              <Route path="members/:id/history" element={<div className="card"><h2>Member History</h2></div>} />
+              <Route path="members" element={<MembersPage />} />
+              <Route path="members/:id/history" element={<MemberHistoryPage />} />
             </Route>
 
             {/* Catch-all fallback */}
