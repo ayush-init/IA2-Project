@@ -19,7 +19,7 @@ Built strictly in compliance with the **Information Assurance 2 (IA2) Full-Stack
 | **Security & Auth** | JSON Web Tokens (`jsonwebtoken`), `bcryptjs` password hashing, Bearer auth middleware |
 | **Validation** | Zod (strict schema validation on params, query, body) |
 | **Logging & Utils** | Morgan request logging, custom centralized `AppError` and `errorHandler` |
-| **Automated Testing** | Vitest 2.1, Supertest 7.0, `mongodb-memory-server` 10.4 (fast in-memory test DB) |
+| **Automated Testing** | Vitest 3.0, Supertest 7.0, `mongodb-memory-server` 10.1 (in-memory test DB) |
 | **Frontend Client** | React 18, TypeScript 5.6, Vite 6, React Router DOM 7, Lucide Icons |
 | **UI Design System** | Modern Light Theme (CSS Variables, high-contrast typography, accessible status badges) |
 | **System Architecture** | Mermaid diagrams, CDN, ALB, Horizontal Express, Redis Caching, Sharded MongoDB |
@@ -37,11 +37,11 @@ IA2-Project/
 │   │   ├── middleware/              # JWT auth guard, request logger, centralized error handler, Zod validator
 │   │   ├── models/                  # Mongoose models: Book, Member, BorrowRecord, Librarian
 │   │   ├── routes/                  # Express route definitions
-│   │   ├── utils/                   # Librarian auto-seed and helper utilities
+│   │   ├── utils/                   # Database seed utilities (default librarian, books, members)
 │   │   ├── validators/              # Zod validation schemas
 │   │   ├── app.ts                   # Express app configuration and middleware mounting
 │   │   └── server.ts                # Server bootstrap and graceful shutdown handler
-│   ├── tests/                       # 53 comprehensive integration and unit tests
+│   ├── tests/                       # 53 comprehensive integration and unit tests (9 test files)
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── .env.example
@@ -79,8 +79,7 @@ IA2-Project/
 ### Prerequisites
 - Node.js (v18.x or higher)
 - npm (v9.x or higher)
-- MongoDB instance running locally on `mongodb://localhost:27017/shelflife` (or use cloud MongoDB Atlas URI).  
-  *(Note: All backend automated tests use an embedded in-memory MongoDB server, requiring no external database installation to run test suites).*
+- MongoDB: The backend includes an **automatic in-memory fallback** via `mongodb-memory-server` if no local MongoDB service is running at `127.0.0.1:27017`. You can also configure an external MongoDB or Atlas connection URI via `MONGODB_URI` in `backend/.env`.
 
 ---
 
@@ -96,7 +95,7 @@ npm install
 # 3. Create .env from template (defaults to port 5000 and localhost MongoDB)
 cp .env.example .env
 
-# 4. Run automated test suite (53 tests)
+# 4. Run automated test suite (53 tests across 9 test files)
 npm test
 
 # 5. Start the backend development server
@@ -107,7 +106,7 @@ The backend API will start on:
 ```
 http://localhost:5000
 ```
-*(On startup, an evaluation librarian account `librarian@shelflife.edu` / `Admin@12345` is automatically seeded).*
+*(On startup, an evaluation librarian account `librarian@shelflife.edu` / `Admin@12345`, 5 academic books, and 3 members are automatically seeded).*
 
 ---
 
@@ -146,16 +145,17 @@ For testing librarian actions (adding books, registering members, issuing books,
 
 ## 5. Assignment Traceability Matrix (IA2 PDF Mapping)
 
-This repository fulfills 100% of the requirements specified in `IA2_FullStack_Exam.pdf`:
+This repository fulfills the requirements specified in `IA2_FullStack_Exam.pdf`:
 
 ### Section A: Backend Development (20 Marks)
 
 | Question | Exam Requirement | Implementation File(s) | Verification Status |
 | :--- | :--- | :--- | :--- |
-| **Q1(a)** | **Data Models**: Book, Member, BorrowRecord with strict types, constraints, and copy invariants (`availableCopies <= totalCopies`). | [`Book.ts`](backend/src/models/Book.ts), [`Member.ts`](backend/src/models/Member.ts), [`BorrowRecord.ts`](backend/src/models/BorrowRecord.ts) | Verified via [`models.test.ts`](backend/tests/models.test.ts) |
+| **Q1(a)** | **Data Models / Schemas**: Mongoose schemas for Book, Member, and BorrowRecord with data types, validation rules, unique constraints, and copy invariants (`availableCopies <= totalCopies`). | [`Book.ts`](backend/src/models/Book.ts), [`Member.ts`](backend/src/models/Member.ts), [`BorrowRecord.ts`](backend/src/models/BorrowRecord.ts) | Verified via [`models.test.ts`](backend/tests/models.test.ts) |
 | **Q1(b)** | **REST Endpoints**: `POST /api/books`, `GET /api/books` (pagination & filter), `POST /api/members`, `POST /api/borrow`, `POST /api/return/:borrowId`, `GET /api/members/:id/history`. | [`books.controller.ts`](backend/src/controllers/books.controller.ts), [`members.controller.ts`](backend/src/controllers/members.controller.ts), [`borrow.controller.ts`](backend/src/controllers/borrow.controller.ts) | Verified via [`books.test.ts`](backend/tests/books.test.ts), [`members.test.ts`](backend/tests/members.test.ts), [`borrow.test.ts`](backend/tests/borrow.test.ts) |
-| **Q1(c)** | **Librarian Auth**: `POST /api/auth/login`, bcrypt hash, JWT issuance, `requireAuth` middleware protecting mutations. | [`Librarian.ts`](backend/src/models/Librarian.ts), [`auth.controller.ts`](backend/src/controllers/auth.controller.ts), [`auth.ts`](backend/src/middleware/auth.ts) | Verified via [`auth.test.ts`](backend/tests/auth.test.ts) |
-| **Q1(d)** | **Concurrency & Edge Cases**: Atomic conditional updates (`$gt: 0` + `$inc: -1`) preventing race conditions; centralized error handling. | [`borrow.controller.ts`](backend/src/controllers/borrow.controller.ts), [`errorHandler.ts`](backend/src/middleware/errorHandler.ts) | Verified via [`concurrency.test.ts`](backend/tests/concurrency.test.ts), [`middleware.test.ts`](backend/tests/middleware.test.ts) |
+| **Q1(c)** | **Middleware**: Centralized error handling, request logging (Morgan), and input validation (Zod). | [`errorHandler.ts`](backend/src/middleware/errorHandler.ts), [`logger.ts`](backend/src/middleware/logger.ts), [`validate.ts`](backend/src/middleware/validate.ts) | Verified via [`errorHandler.test.ts`](backend/tests/errorHandler.test.ts) |
+| **Q1(d)** | **Authentication Layer**: `/api/auth/login` route issuing JWT, and `requireAuth` middleware protecting write/borrow/return routes. | [`auth.controller.ts`](backend/src/controllers/auth.controller.ts), [`auth.ts`](backend/src/middleware/auth.ts), [`Librarian.ts`](backend/src/models/Librarian.ts) | Verified via [`auth.test.ts`](backend/tests/auth.test.ts) |
+| **Q1(e)** | **Concurrency & Race Condition Prevention**: Note / explanation and implementation on preventing two librarians from issuing the last copy simultaneously. | [`borrow.controller.ts`](backend/src/controllers/borrow.controller.ts), [`backend/README.md`](backend/README.md#concurrency-control-strategy-q1e) | Verified via [`borrow.test.ts`](backend/tests/borrow.test.ts) |
 
 ---
 
@@ -163,11 +163,13 @@ This repository fulfills 100% of the requirements specified in `IA2_FullStack_Ex
 
 | Question | Exam Requirement | Implementation File(s) | Verification Status |
 | :--- | :--- | :--- | :--- |
-| **Q2(a)** | **React + TS Architecture**: Component hierarchy, typed services, clean state, modern Light Theme UI. | [`App.tsx`](frontend/src/App.tsx), [`index.css`](frontend/src/index.css), [`api.ts`](frontend/src/services/api.ts), [`types/index.ts`](frontend/src/types/index.ts) | Verified via `npm run build` |
-| **Q2(b)** | **Book Catalogue Page (`/books`)**: Title search, genre dropdown, pagination, loading, error, empty states. | [`BooksPage.tsx`](frontend/src/pages/BooksPage.tsx) | Interactive & functional in browser |
-| **Q2(c)** | **Issue & Member History (`/borrow`, `/members/:id/history`)**: Issue form with validation, atomic submission, return workflows, glowing **OVERDUE** badge if `dueDate < today`. | [`IssueBookPage.tsx`](frontend/src/pages/IssueBookPage.tsx), [`MemberHistoryPage.tsx`](frontend/src/pages/MemberHistoryPage.tsx) | Interactive & functional in browser |
-| **Q2(d)** | **State Management Architecture Rationale**: Technical write-up explaining Redux evaluation vs Context + local state. | [`frontend/README.md`](frontend/README.md#5-state-management-architecture-rationale--q2d) | Detailed essay included |
-| **Q2(e)** | **Generic Reusable Component**: Genuine TypeScript generic component `<DataTable<T>>` used across multiple pages. | [`DataTable.tsx`](frontend/src/components/common/DataTable.tsx) (used in Books, Members, and History views) | Verified generic polymorphism |
+| **Q2(a)** | **TypeScript Interfaces & Typed API Client**: Typed models for Book, Member, BorrowRecord matching backend schema, and typed API client (`api.ts`). | [`types/index.ts`](frontend/src/types/index.ts), [`api.ts`](frontend/src/services/api.ts) | Verified via `npm run build` |
+| **Q2(b)** | **Book List Page**: Display books in table/grid, title search, genre dropdown, useState/useEffect, loading and error states. | [`BooksPage.tsx`](frontend/src/pages/BooksPage.tsx) | Interactive & functional in browser |
+| **Q2(c)** | **Issue Book Form**: Member and book selector, submit to `POST /api/borrow`, success/error toast, and disabled submit button while in flight. | [`IssueBookPage.tsx`](frontend/src/pages/IssueBookPage.tsx) | Interactive & functional in browser |
+| **Q2(d)** | **Member History Page**: Member's BorrowRecord list with visually distinct badge for overdue items (`dueDate < today` and not returned). | [`MemberHistoryPage.tsx`](frontend/src/pages/MemberHistoryPage.tsx) | Interactive & functional in browser |
+| **Q2(e)** | **Generic Reusable Component**: Typed generic component `<DataTable<T>>` reused across Book catalogue, Members directory, and Member History. | [`DataTable.tsx`](frontend/src/components/common/DataTable.tsx) | Verified generic polymorphism |
+| **Q2(f)** | **Client-Side Route Protection**: Protected route wrapper redirecting unauthenticated users to `/login` via React Router. | [`ProtectedRoute.tsx`](frontend/src/components/auth/ProtectedRoute.tsx) | Verified route redirect |
+| **Deliverable** | **State Management Note**: Written rationale explaining local state vs Context vs libraries (Redux). | [`frontend/README.md`](frontend/README.md#5-state-management-architecture-rationale--q2d) | Detailed technical note |
 
 ---
 
@@ -175,15 +177,23 @@ This repository fulfills 100% of the requirements specified in `IA2_FullStack_Ex
 
 | Question | Exam Requirement | Implementation Document | Details Included |
 | :--- | :--- | :--- | :--- |
-| **Q3(a)** | **System Architecture**: High-level diagram (CDN, ALB, horizontal Express, Redis, MongoDB replica sets, 500 campuses, 2M members). | [`system-design.md`](system-design/system-design.md#q3a-high-level-system-architecture-diagram-500-campuses-2m-members) | Mermaid sequence & flowcharts |
-| **Q3(b)** | **Redis Caching Strategy**: Cache keys, TTL, write-around invalidation on checkout/return, cache stampede prevention (mutex lock / early expiration). | [`system-design.md`](system-design/system-design.md#q3b-redis-caching-strategy-for-get-apibooks) | Code snippet + sequence diagram |
-| **Q3(c)** | **Database Scaling & Sharding**: Shard key selection for Books and BorrowRecords with query pattern justification. | [`system-design.md`](system-design/system-design.md#q3c-database-scaling--sharding-strategy-mongodb) | Evaluation of hashed vs range keys |
-| **Q3(d)** | **Concurrency Control**: Compare atomic conditional update vs Redlock vs 2PC with concrete code example. | [`system-design.md`](system-design/system-design.md#q3d-concurrency-control-for-issue-book-operations) | CAS mechanics & performance trade-off table |
-| **Q3(e)** | **10× Semester Traffic Spike**: Autoscaling policies, read replica scaling, queue load shedding, connection pooling, circuit breaking, degraded mode. | [`system-design.md`](system-design/system-design.md#q3e-handling-10-traffic-spikes-during-semester-examination-weeks) | Scaling topology & graceful degradation |
+| **Q3(a)** | **System Architecture**: High-level architecture with client, API layer, database, cache, load balancing and other relevant components. | [`system-design/system-design.md`](system-design/system-design.md) | Mermaid architecture diagram and architecture explanation |
+| **Q3(b)** | **Database Scaling & Sharding**: Single MongoDB cluster vs sharding, with shard keys for Book and BorrowRecord and justification. | [`system-design/system-design.md`](system-design/system-design.md) | Sharding strategy and query-pattern justification |
+| **Q3(c)** | **Caching Strategy**: Identify the most read-heavy operation and explain cached data, invalidation and TTL. | [`system-design/system-design.md`](system-design/system-design.md) | Redis caching strategy, cache keys, TTL and invalidation |
+| **Q3(d)** | **Concurrency Control**: Prevent `availableCopies` from becoming negative during concurrent issue operations. | [`system-design/system-design.md`](system-design/system-design.md) | Atomic conditional update / concurrency strategy and trade-offs |
+| **Q3(e)** | **10× Traffic Spike**: Handle semester traffic spikes without permanently over-provisioning infrastructure. | [`system-design/system-design.md`](system-design/system-design.md) | Autoscaling, caching, load balancing and traffic management |
 
 ---
 
-## 6. Atomic Concurrency Implementation
+## 6. System Design
+
+The complete scalable system design, including the architecture diagram, database scaling, caching strategy, concurrency control, and 10× traffic handling, is available here:
+
+[View System Design](system-design/system-design.md)
+
+---
+
+## 7. Atomic Concurrency Implementation
 
 The critical checkout operation (`POST /api/borrow`) is protected against race conditions using MongoDB's atomic conditional compare-and-swap (CAS) mechanics:
 
@@ -209,15 +219,15 @@ if (!updatedBook) {
 }
 ```
 
-This guarantee is mathematically proven in [`concurrency.test.ts`](backend/tests/concurrency.test.ts):
-- 5 concurrent requests compete for a book with only 1 available copy.
+This guarantee is tested in [`borrow.test.ts`](backend/tests/borrow.test.ts):
+- Concurrent requests compete for a book with only 1 available copy.
 - Exactly 1 request succeeds (HTTP 201).
-- 4 requests fail immediately with HTTP 400 (Out of Stock).
+- Subsequent competing requests fail immediately with HTTP 400 (Out of Stock).
 - Zero overselling occurs, and `availableCopies` ends at exactly 0.
 
 ---
 
-## 7. Sample API cURL Commands
+## 8. Sample API cURL Commands
 
 ### 1. Librarian Login
 ```bash
@@ -284,7 +294,7 @@ curl -X GET http://localhost:5000/api/members/<MEMBER_ID>/history \
 
 ---
 
-## 8. Verification & Test Execution
+## 9. Verification & Test Execution
 
 Run the complete backend integration test suite:
 
@@ -295,20 +305,19 @@ npm test
 
 Expected Output:
 ```text
-✓ tests/health.test.ts (2 tests)
-✓ tests/models.test.ts (7 tests)
-✓ tests/auth.test.ts (8 tests)
-✓ tests/books.test.ts (10 tests)
-✓ tests/members.test.ts (7 tests)
-✓ tests/borrow.test.ts (8 tests)
-✓ tests/return.test.ts (5 tests)
-✓ tests/concurrency.test.ts (1 test)
-✓ tests/history.test.ts (3 tests)
-✓ tests/middleware.test.ts (5 tests)
+ ✓ tests/models.test.ts (7 tests)
+ ✓ tests/errorHandler.test.ts (5 tests)
+ ✓ tests/health.test.ts (2 tests)
+ ✓ tests/member-history.test.ts (3 tests)
+ ✓ tests/return.test.ts (5 tests)
+ ✓ tests/auth.test.ts (8 tests)
+ ✓ tests/borrow.test.ts (6 tests)
+ ✓ tests/members.test.ts (7 tests)
+ ✓ tests/books.test.ts (10 tests)
 
-Test Files  10 passed (10)
-     Tests  53 passed (53)
-  Duration  3.82s
+ Test Files  9 passed (9)
+      Tests  53 passed (53)
+   Duration  ~4s
 ```
 
 Compile the frontend production bundle:
@@ -325,11 +334,11 @@ vite v6.4.3 building for production...
 dist/index.html                   0.80 kB
 dist/assets/index-YU0wNk5g.css    4.78 kB
 dist/assets/index-9RXiCDFZ.js   233.76 kB
-✓ built in 6.25s
+✓ built in ~6s
 ```
 
 ---
 
-## 9. License
+## 10. License
 
 This project is created for academic submission and examination under the Information Assurance 2 (IA2) curriculum.
